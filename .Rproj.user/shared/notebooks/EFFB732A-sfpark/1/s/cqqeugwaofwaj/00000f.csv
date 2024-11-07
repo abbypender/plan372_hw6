@@ -1,3 +1,0 @@
-"0","ggplot(citywide_entries, aes(x=date, y=entries)) +"
-"0","  # and add a line plot to it"
-"0","  geom_line()"

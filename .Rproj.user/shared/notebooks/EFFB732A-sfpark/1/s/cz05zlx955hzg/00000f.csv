@@ -1,4 +1,0 @@
-"0","citywide_entries = total_entries |>"
-"0","  group_by(date) |>"
-"0","  summarize(entries=sum(entries)) |>"
-"0","  ungroup()"

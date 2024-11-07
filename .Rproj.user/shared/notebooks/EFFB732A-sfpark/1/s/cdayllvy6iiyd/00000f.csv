@@ -1,2 +1,0 @@
-"0","ggplot(garage_month_entries, aes(x=year_month, y=entries, group=facility, color=facility)) +"
-"0","  geom_line()"

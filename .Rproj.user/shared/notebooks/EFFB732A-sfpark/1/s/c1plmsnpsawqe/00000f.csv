@@ -1,5 +1,0 @@
-"0","total_entries_cc = civic_center_data |> "
-"0","  group_by(date, facility) |>"
-"0","  summarize(entries=sum(entries)) %>% "
-"0","  ungroup()"
-"2","`summarise()` has grouped output by 'date'. You can override using the `.groups` argument."

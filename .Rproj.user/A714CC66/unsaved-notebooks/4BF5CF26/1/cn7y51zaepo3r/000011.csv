@@ -1,3 +1,0 @@
-"0","keywords <- c(""Diversity"")"
-"0","filtered_DEI_data <- salary_data %>% filter(grepl(paste(keywords, collapse = ""|""), 'JOB CATEGORY', ignore.case= TRUE))"
-"0","filtered_DEI_data"

@@ -1,8 +1,0 @@
-"0","citywide_entries$month_year = floor_date(citywide_entries$date, unit=""month"")"
-"0","monthly_entries = citywide_entries |>"
-"0","  group_by(month_year) |>"
-"0","  summarize(entries=sum(entries)) |>"
-"0","  ungroup()"
-"0",""
-"0","ggplot(monthly_entries, aes(x=month_year, y=entries)) +"
-"0","  geom_line()"
