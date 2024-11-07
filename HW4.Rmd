@@ -1,0 +1,203 @@
+---
+title: "HW4"
+author: "Abby_Pender"
+date: "2024-11-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidycensus)
+library(ggthemes)
+library(dplyr)
+library(ggplot2)
+library(broom)
+```
+### Question 1: Market Saturation Analysis 
+
+```{r}
+# Read in airport data 
+ap_data = read_csv("/Users/abbypender/Desktop/plan372/airport_pairs.csv")
+head(ap_data)
+```
+
+```{r}
+# Create a table of the existing flights to or from RDU, and the number of passengers traveling to each destination
+
+# Filter for flights to or from RDU, then summarize passenger counts above 10,000
+
+rdu_flights <- ap_data %>% 
+  filter(origin == "RDU" | dest == "RDU") %>% 
+  group_by(origin, dest) %>% 
+  summarize(
+    total_passengers = sum(passengers, na.rm = TRUE),
+    distancemiles = first(distancemiles)  
+  ) %>% 
+  filter(total_passengers > 10000)
+
+summary(rdu_flights)
+
+```
+
+### Question 2: Bringing in Census Data 
+
+```{r}
+# total population for CBSA
+variables <- c(
+  "B01003_001",  # Total Population
+  "B19013_001",  # Median Household Income
+  "B15003_022"   # Bachelor's Degree or higher
+)
+
+cbsa_data <- get_acs(geography = "cbsa",  
+                     variables = variables,  
+                     year = 2021, 
+                     output="wide") %>%
+  rename(
+    total_pop = B01003_001E,
+    median_income = B19013_001E,
+    bachelors_or_higher = B15003_022E
+  )
+
+print(cbsa_data)
+
+```
+
+```{r}
+# Prepare the origin population dataset 
+origin_pop <- cbsa_data %>% 
+  rename(origin_cbsa = GEOID, origin_pop = total_pop, origin_median_income = median_income)
+
+# Prepare the destination population dataset 
+dest_pop <- cbsa_data %>% 
+  rename(dest_cbsa = GEOID, dest_pop = total_pop, dest_median_income = median_income)
+```
+
+```{r}
+cbsa_volumes <- ap_data %>%
+  group_by(origin_cbsa, dest_cbsa) %>%
+  summarize(
+    total_passengers = sum(passengers, na.rm = TRUE),
+    avg_distancemiles = mean(distancemiles, na.rm = TRUE),  # Calculate average distance
+    .groups = "drop"
+  )
+
+
+# Print the new dataset
+print(cbsa_volumes)
+```
+
+```{r}
+# Convert both origin_cbsa and dest_cbsa to character type if needed
+cbsa_volumes <- cbsa_volumes %>%
+  mutate(
+    origin_cbsa = as.character(origin_cbsa),
+    dest_cbsa = as.character(dest_cbsa)
+  )
+
+origin_pop <- origin_pop %>%
+  mutate(origin_cbsa = as.character(origin_cbsa))
+
+dest_pop <- dest_pop %>%
+  mutate(dest_cbsa = as.character(dest_cbsa))
+
+# Join the data frames
+cbsa_volumes <- cbsa_volumes %>%
+  left_join(origin_pop, by = "origin_cbsa") %>%
+  left_join(dest_pop, by = "dest_cbsa")
+
+```
+
+
+```{r}
+# How do I know if a data entry is not in a metropolitan area?
+# Remove non-metropolitan areas 
+
+```
+
+```{r}
+
+# Scatterplot: Origin Population vs Total Passengers
+plot1 <- ggplot(cbsa_volumes, aes(x = origin_pop, y = total_passengers)) +
+  geom_point() +
+  labs(title = "Origin Population vs Total Passengers",
+       x = "Origin Population",
+       y = "Total Passengers") +
+  theme_minimal()
+
+# Scatterplot: Destination Population vs Total Passengers
+plot2 <- ggplot(cbsa_volumes, aes(x = dest_pop, y = total_passengers)) +
+  geom_point() +
+  labs(title = "Destination Population vs Total Passengers",
+       x = "Destination Population",
+       y = "Total Passengers") +
+  theme_minimal()
+
+# Scatterplot: Flight Distance vs Total Passengers
+plot3 <- ggplot(cbsa_volumes, aes(x = avg_distancemiles, y = total_passengers)) +
+  geom_point() +
+  labs(title = "Flight Distance vs Total Passengers",
+       x = "Average Flight Distance (miles)",
+       y = "Total Passengers") +
+  theme_minimal()
+print(plot1)
+print(plot2)
+print(plot3)
+```
+
+# Question 3: Passenger volume regression 
+```{r}
+# Fit the linear regression model
+# Fit the linear regression model including median income
+model <- lm(total_passengers ~ origin_pop + dest_pop + avg_distancemiles + 
+              origin_median_income + dest_median_income, data = cbsa_volumes)
+
+# Display the summary of the regression model
+summary(model)
+
+
+```
+
+```{r}
+# Create the initial route_data dataframe
+route_data <- data.frame(
+  origin_cbsa = c("RDU", "RDU", "RDU", "RDU"),  
+  dest_cbsa = c("PDX", "ELP", "TLH", "SMF"),  
+  avg_distancemiles = c(2363, 1606, 496, 2345),  
+  origin_pop = c(1391801, 1391801, 1391801, 1391801), 
+  dest_pop = c(2493429, 863807, 382747, 2379368),  
+  origin_median_income = c(83581, 83581, 83581, 83581),  
+  dest_median_income = c(82901, 50849, 56304, 81264)   
+)
+
+# Create the flipped rows
+route_data_flipped <- data.frame(
+  origin_cbsa = c("PDX", "ELP", "TLH", "SMF"),  
+  dest_cbsa = c("RDU", "RDU", "RDU", "RDU"),  
+  avg_distancemiles = c(2363, 1606, 496, 2345),  
+  origin_pop = c(2493429, 863807, 382747, 2379368),  
+  dest_pop = c(1391801, 1391801, 1391801, 1391801),  
+  origin_median_income = c(82901, 50849, 56304, 81264),  
+  dest_median_income = c(83581, 83581, 83581, 83581)   
+)
+
+# Combine the original and flipped route data
+route_data_combined <- bind_rows(route_data, route_data_flipped)
+
+# Print the combined dataset
+print(route_data_combined)
+```
+
+```{r}
+# Generate predictions using the model with median income
+route_data_combined$predicted_passenger_demand <- predict(model, route_data_combined)
+
+
+print(route_data_combined)
+
+
+```
