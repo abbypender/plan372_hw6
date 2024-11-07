@@ -1,0 +1,7 @@
+"0","getwd()"
+"1","[1]"
+"1"," ""/Users/abbypender/Desktop"""
+"1","
+"
+"0","setwd(""/Users/abbypender/Desktop"")"
+"0","salary_data = read_excel(""/Users/abbypender/Desktop/Salary Data Export.xlsx"")"

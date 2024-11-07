@@ -1,0 +1,6 @@
+"0","total_entries |>"
+"0","  group_by(facility, weekend) |>"
+"0","  summarize(entries=mean(entries)) |>"
+"0","  ungroup() |>"
+"0","  pivot_wider(names_from=weekend, values_from=entries)"
+"2","`summarise()` has grouped output by 'facility'. You can override using the `.groups` argument."

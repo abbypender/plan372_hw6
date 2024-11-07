@@ -1,0 +1,6 @@
+"0","total_entries$year_month = floor_date(total_entries$date, unit=""month"")"
+"0","garage_month_entries = total_entries |>"
+"0","  group_by(facility, year_month) |>"
+"0","  summarize(entries=sum(entries)) |>"
+"0","  ungroup()"
+"2","`summarise()` has grouped output by 'facility'. You can override using the `.groups` argument."

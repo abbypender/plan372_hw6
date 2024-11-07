@@ -1,0 +1,4 @@
+"0","data |>"
+"0","  group_by(usage_type) |>"
+"0","  summarize(sum_entries=sum(entries)) |>"
+"0","  ungroup()"

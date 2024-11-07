@@ -1,0 +1,1 @@
+"0","stopifnot(!any(is.na(total_entries$weekend)))"

@@ -1,0 +1,4 @@
+"0","data |>"
+"0","  group_by(facility) |>"
+"0","  summarize(mean_entries=mean(entries)) |>"
+"0","  ungroup()"

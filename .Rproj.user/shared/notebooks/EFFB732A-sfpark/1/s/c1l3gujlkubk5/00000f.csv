@@ -1,0 +1,2 @@
+"0","total_entries$weekend = recode(total_entries$day_of_week, ""Mon""=""weekday"", ""Tue""=""weekday"", ""Wed""=""weekday"", ""Thu""=""weekday"","
+"0","                               ""Fri""=""weekday"", ""Sat""=""weekend"", ""Sun""=""weekend"")"
