@@ -1,0 +1,63 @@
+---
+title: "PLAN_372_HW6"
+author: "Abby Pender"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+# Load libraries 
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(DT)
+```
+
+```{r}
+TS3_Raw_tree_data <- read_csv("Desktop/plan372/RDS-2016-0005/Data/TS3_Raw_tree_data.csv")
+```
+
+```{r}
+# The dataset does not contain a state column, but does contain a city column which contains both city and state information (e.g. Charlotte, NC). Use a regular expression to create separate columns for the city name and state abbreviation, and use these columns to answer the following questions.
+
+# How many records are there in each state (include a table or bar plot)? [4 points]
+# Load necessary librarie
+TS3_Raw_tree_data <- TS3_Raw_tree_data %>%
+  mutate(
+    # Extract city (everything before the comma)
+    City = str_extract(City, "^[^,]+"),       
+    # Extract state (two characters after the comma)
+    State = str_extract(City, "(?<=, )\\w{2}$") 
+  )
+
+# Count the number of records per state
+state_counts <- TS3_Raw_tree_data %>%
+  group_by(state) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+
+DT::datatable(state_counts)
+```
