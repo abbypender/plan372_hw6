@@ -5,13 +5,7 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+##### GitHub Repository: https://github.com/abbypender/plan372_hw6
 
 ```{r}
 1 + 1
@@ -37,27 +31,159 @@ library(DT)
 ```
 
 ```{r}
-TS3_Raw_tree_data <- read_csv("Desktop/plan372/RDS-2016-0005/Data/TS3_Raw_tree_data.csv")
+TS3_Raw_tree_data <- read_csv("/Users/abbypender/Desktop/plan372/RDS-2016-0005/Data/TS3_Raw_tree_data.csv")
 ```
 
-```{r}
-# The dataset does not contain a state column, but does contain a city column which contains both city and state information (e.g. Charlotte, NC). Use a regular expression to create separate columns for the city name and state abbreviation, and use these columns to answer the following questions.
+Question 1: Sample sizes by state
 
-# How many records are there in each state (include a table or bar plot)? [4 points]
-# Load necessary librarie
+```{r}
+
 TS3_Raw_tree_data <- TS3_Raw_tree_data %>%
   mutate(
-    # Extract city (everything before the comma)
-    City = str_extract(City, "^[^,]+"),       
-    # Extract state (two characters after the comma)
-    State = str_extract(City, "(?<=, )\\w{2}$") 
+    # Extract city 
+    City_Name = str_extract(City, "^[^,]+"),        
+    
+    # Extract state 
+    state = str_extract(City, "(?<=, )\\w{2}$")
   )
 
-# Count the number of records per state
+# Count number of records per state
 state_counts <- TS3_Raw_tree_data %>%
   group_by(state) %>%
   summarise(count = n()) %>%
   arrange(desc(count))
 
-DT::datatable(state_counts)
+print(state_counts)
+```
+
+## Question 2: Cities in NC/SC
+
+```{r}
+
+# Filter state for NC and SC
+state_tree_data <- TS3_Raw_tree_data %>%
+  filter(state %in% c("NC", "SC"))
+
+#Filter cities in NC and SC
+cities_nc_sc <- state_tree_data %>%
+  select(City) %>%
+  distinct()
+
+print(cities_nc_sc)
+
+```
+
+## Question 3: Genera and Species
+
+```{r}
+
+# Get genus
+state_tree_data <- state_tree_data %>% 
+  mutate(Genus = str_extract(ScientificName, "^[A-Za-z]+")
+         )
+
+# Cacultae average
+avg_diametere_by_genus <- state_tree_data %>% 
+  group_by(Genus) %>% 
+  summarise(Average_Canopy_Diameter = mean(`AvgCdia (m)`, na.rm = TRUE)) %>% 
+  arrange(desc(Average_Canopy_Diameter))
+
+# Show largest average genus 
+largest_genus <- avg_diametere_by_genus[1, ]
+print(largest_genus)
+
+```
+
+## Extra Credit
+
+#### Tree Age
+
+```{r}
+
+# Caculate average age by genus 
+avg_age_by_genus <- state_tree_data %>%
+  group_by(Genus) %>%
+  summarise(Average_Age = mean(Age, na.rm = TRUE)) %>%  
+  arrange(desc(Average_Age))
+
+# Bar plot of average age by genus
+ggplot(avg_age_by_genus, aes(x = reorder(Genus, -Average_Age), y = Average_Age)) +
+  geom_bar(stat = "identity", fill = "darkgreen") +
+  labs(
+    title = "Average Age of Trees by Genus",
+    x = "Genus",
+    y = "Average Age (years)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+
+
+state_tree_data <- state_tree_data %>%
+  mutate(Genus = str_extract(ScientificName, "^[A-Za-z]+"))  
+
+# Calculate growth rate for each genus
+growth_rate_by_genus <- state_tree_data %>%
+  group_by(Genus) %>%
+  summarise(
+    Average_Age = mean(Age, na.rm = TRUE),  
+    Average_Canopy_Diameter = mean(`AvgCdia (m)`, na.rm = TRUE), 
+    Growth_Rate = Average_Canopy_Diameter / Average_Age  
+  ) %>%
+  arrange(desc(Growth_Rate)) 
+
+# View top 10 
+head(growth_rate_by_genus, 10)
+
+#Plot tree growth rate by genus 
+ggplot(growth_rate_by_genus, aes(x = reorder(Genus, -Growth_Rate), y = Growth_Rate)) +
+  geom_bar(stat = "identity", fill = "lightgreen") +
+  labs(
+    title = "Tree Growth Rate by Genus",
+    x = "Genus",
+    y = "Growth Rate (Canopy Diameter / Age)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+best_genus <- growth_rate_by_genus[1, ]
+print(best_genus)
+
+
+```
+
+```{r}
+
+state_tree_data <- state_tree_data %>%
+  mutate(
+    # Extract Genus
+    Genus = str_extract(ScientificName, "^[A-Za-z]+"),
+    
+    # Extract Species
+    Species = str_extract(ScientificName, "(^[A-Za-z]+\\s)([A-Za-z]+)")
+  ) %>%
+  mutate(
+    # Remove cultivar/variety or extra info
+    Species = str_replace(Species, "(^[A-Za-z]+\\s)([A-Za-z]+).*", "\\2"),  # Keep only genus + species part
+    # Remove 'x' 
+    Species = str_replace(Species, "^x\\s*", ""),
+    # Remove extra text 
+    Species = str_replace(Species, "(?i)(\\s+['‘].+['’]|\\s+var\\.\\s+.+)$", "")
+  )
+
+
+
+species_count_by_genus <- state_tree_data %>%
+  group_by(Genus) %>%
+  summarise(Species_Count = n_distinct(Species), .groups = 'drop') %>%
+  arrange(desc(Species_Count))  
+
+
+
+print(species_count_by_genus)
+
 ```
